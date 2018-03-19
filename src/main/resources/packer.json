@@ -1,0 +1,45 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "us-east-2",
+    "source_ami_filter": {
+      "filters": {
+      "virtualization-type": "hvm",
+      "name": "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*",
+      "root-device-type": "ebs"
+      },
+      "owners": ["099720109477"],
+      "most_recent": true
+    },
+    "instance_type": "t2.micro",
+    "ssh_username": "ubuntu",
+    "ami_name": "omniapp-base {{timestamp}}",
+    "ami_description": "OmniApp Base Image - Latest",
+    "ami_virtualization_type": "hvm"
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sleep 30",
+      "sudo apt-get update",
+      "sudo apt-get upgrade -y",
+      "sudo apt-get install -y mountall wget unzip htop apt-transport-https ca-certificates curl software-properties-common",
+      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
+      "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+      "sudo apt-get update",
+      "sudo apt-get install -y docker-ce",
+      "sudo apt-get autoremove -y",
+      "sudo sed -i '/^PermitRootLogin/c\\PermitRootLogin prohibit-password' /etc/ssh/sshd_config",
+      "sudo passwd -l root",
+      "sudo shred -u /etc/ssh/*_key /etc/ssh/*_key.pub",
+      "sudo rm /root/.ssh/authorized_keys /home/ubuntu/.ssh/authorized_keys",
+      "sudo sed -i '$a UseDNS no' /etc/ssh/sshd_config"
+    ]
+  }]
+}
